@@ -35,7 +35,7 @@ async fn main() {
         .fallback(routes::not_found)
         .layer(middleware::from_fn(middlewares::add_common_headers));
 
-    println!("Axum server is listening on port 8080");
+    println!("Axum server is listening on port 9090");
     let listener = tokio::net::TcpListener::bind("localhost:9090")
         .await
         .unwrap();

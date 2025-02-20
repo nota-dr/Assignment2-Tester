@@ -1,6 +1,6 @@
 # **Computer Communication Assignment2 Tester**
 
-Automated integration tests to evaluate students' Assignment 2 submissions in Computer Communication.
+Automated integration tests to evaluate students' Assignment 2 submissions in Computer Communication.\
 This tester contains an additional axum server crate in order to check the client implemented in assignment2.
 
 ## Features
@@ -41,10 +41,11 @@ The tester includes the following tests:
 ### Tester Usage
 from parent directory:
 1. **Prepare the Testee Directory**
-- Place the student's assignment files inside the testee directory.
+- Place the student's assignment files inside the testee directory located in the working space root (parent directory).
 2. **Execute the Tester**
-``` cargo run -p assignment2-tester --bin assignment2-tester ```
-this command will execute all the integration tests against the provided assignment files.
+Execute the following command ***from the working space root (parent directory)*** \
+``` cargo run -p assignment2-tester --bin assignment2-tester ```\
+This command will execute all the integration tests against the provided assignment files.
 3. **Review Log Files**
 - After execution, log files will be generated inside the testee directory.
 
@@ -52,5 +53,5 @@ this command will execute all the integration tests against the provided assignm
 for students that want to test their client against the server without running the tester.
 from the parent directory:
 1. **Execute Axum Server**
-``` cargo run -p assignment2-tester --bin axum_server ```
+``` cargo run -p assignment2-tester --bin axum_server ```\
 This command will run the server on localhost port 9090
