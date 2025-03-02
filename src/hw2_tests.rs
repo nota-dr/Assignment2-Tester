@@ -1,6 +1,9 @@
-use reqwest::blocking::Client;
+use async_trait::async_trait;
+use reqwest::Client;
 use reqwest::{header, Version};
-use tests_lib::{check_valgrind_leaks, ProcessOutput, TestAgent};
+use tests_lib::{
+    check_valgrind_leaks, CommunicateOutput, ProcessOutput, TestAgent,
+};
 
 // forward declaration for dynamic dispatch
 
@@ -14,21 +17,23 @@ pub struct AbsoluteRedirect;
 pub struct LifeCycle;
 pub struct Valgrind;
 
-fn send_http_request(url: &str) -> reqwest::blocking::Response {
+async fn send_http_request(url: &str) -> reqwest::Response {
     let client = Client::new();
     client
         .get(url)
         .version(Version::HTTP_11)
         .header(header::CONNECTION, "close")
         .send()
-        .expect("[-] reqwest client could not send request successfully")
+        .await
+        .expect("[-] Failed to send request")
 }
 
+#[async_trait]
 impl TestAgent for Usage {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -60,11 +65,12 @@ fn request_structure_verifier(
     true
 }
 
+#[async_trait]
 impl TestAgent for HttpRequestStructure {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -78,11 +84,12 @@ impl TestAgent for HttpRequestStructure {
     }
 }
 
+#[async_trait]
 impl TestAgent for HttpRequestStructureWithParams {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -96,9 +103,9 @@ impl TestAgent for HttpRequestStructureWithParams {
     }
 }
 
-fn response_verifier(url: &str, output: ProcessOutput) -> bool {
+async fn response_verifier(url: &str, output: ProcessOutput) -> bool {
     let output = [output.stdout, output.stderr].concat();
-    let response = send_http_request(url);
+    let response = send_http_request(url).await;
 
     if !response.status().is_success() {
         panic!(
@@ -109,16 +116,18 @@ fn response_verifier(url: &str, output: ProcessOutput) -> bool {
 
     let body = response
         .bytes()
-        .expect("[-] Failed to read response body from reqwest client");
+        .await
+        .expect("[-] Failed to read response body");
 
     output.windows(body.len()).any(|window| window == body)
 }
 
+#[async_trait]
 impl TestAgent for ResponseContainsText {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -126,26 +135,30 @@ impl TestAgent for ResponseContainsText {
             "http://universities.hipolabs.com/search?country=israel",
             result,
         )
+        .await
     }
 }
 
+#[async_trait]
 impl TestAgent for ResponseContainsImage {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
         response_verifier("http://localhost:9090/resources/meow.png", result)
+            .await
     }
 }
 
+#[async_trait]
 impl TestAgent for RelativeRedirectTimes {
-    fn validate(
+    async fn validate(
         &self,
         args: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -172,11 +185,12 @@ impl TestAgent for RelativeRedirectTimes {
     }
 }
 
+#[async_trait]
 impl TestAgent for AbsoluteRedirect {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -201,11 +215,12 @@ impl TestAgent for AbsoluteRedirect {
     }
 }
 
+#[async_trait]
 impl TestAgent for LifeCycle {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         result: ProcessOutput,
         _: &std::path::PathBuf,
     ) -> bool {
@@ -315,11 +330,12 @@ impl TestAgent for LifeCycle {
     }
 }
 
+#[async_trait]
 impl TestAgent for Valgrind {
-    fn validate(
+    async fn validate(
         &self,
         _: &Vec<String>,
-        _: Option<Vec<Vec<u8>>>,
+        _: Option<CommunicateOutput>,
         _: ProcessOutput,
         cwd: &std::path::PathBuf,
     ) -> bool {

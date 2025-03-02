@@ -53,8 +53,10 @@ fn main() {
 
     let compilation = tm.compile_assignment("gcc -Wall *.c -o client");
     if compilation != "error" {
+        let results = tm.run_tests();
+        println!();
         println!("----- Tests Results -----");
-        for (name, ok) in tm.run_tests() {
+        for (name, ok) in results {
             if ok {
                 println!("[+] {}... \x1b[32mok\x1b[0m", name);
             } else {

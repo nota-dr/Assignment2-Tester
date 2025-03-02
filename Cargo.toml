@@ -19,6 +19,8 @@ sha2 = "0.10"
 tower = "0.5"
 infer = "0.3"
 chrono = "0.4"
+bytes = "1.1"
+async-trait = "0.1.86"
 
 [dev-dependencies]
 httpc-test = "0.1.1"
