@@ -39,6 +39,7 @@ async fn load_file_into_response(
         .join("axum")
         .join("resources")
         .join(&file_name);
+    println!("file_path: {:?}", file_path);
 
     match tokio::fs::File::open(&file_path).await {
         Ok(mut file) => {
