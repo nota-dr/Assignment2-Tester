@@ -1,27 +1,43 @@
-use libc::{prctl, PR_SET_PDEATHSIG, SIGHUP};
-use std::os::unix::process::CommandExt;
-use std::process::{Command, Stdio};
-use std::thread::sleep;
-use std::time::Duration;
+use std::process::Stdio;
+use procfs::process::all_processes;
 
 fn main() {
-    let mut server = unsafe {
-        Command::new("cargo")
-            .arg("run")
-            .arg("-p")
-            .arg("assignment2-tester")
-            .arg("--bin")
-            .arg("axum_server")
-            .stdout(Stdio::null())
-            .pre_exec(|| {
-                prctl(PR_SET_PDEATHSIG, SIGHUP);
-                Ok(())
-            })
-            .spawn()
-            .expect("Failed to start server")
-    };
 
-    sleep(Duration::from_secs(10));
+    let is_server_running = all_processes().unwrap()
+        .any(|process| {
+            if let Ok(process) = process {
+                if let Ok(cmdline) = process.cmdline() {
+                    if !cmdline.is_empty() && cmdline[0].contains("axum_server") {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        });
+
+    let _server = if !is_server_running {
+        let cwd = std::env::current_dir().unwrap();
+        if !cwd.join("assignment2-tester").exists() {
+            println!("Please run the tester from its workspace directory");
+            std::process::exit(1);
+        }
+        let command_cwd = cwd
+            .join("target")
+            .join("debug");
+
+        let server = std::process::Command::new("./axum_server")
+            .current_dir(command_cwd)
+            .stdout(Stdio::null())
+            .spawn()
+            .expect("Failed to start server"); 
+
+        std::thread::sleep(std::time::Duration::from_secs(10));
+
+        Some(server)
+    } else {
+        None
+    };
 
     match std::process::Command::new("valgrind")
         .arg("--version")
@@ -67,5 +83,6 @@ fn main() {
         println!("Failed to compile assignment");
     }
 
-    server.kill().unwrap();
+    // keep the server running...
+    // _server.unwarp().kill().unwrap();
 }
