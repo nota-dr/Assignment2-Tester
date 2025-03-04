@@ -6,7 +6,6 @@ use axum::{extract, response};
 use hmac::{Hmac, Mac};
 use serde::Deserialize;
 use sha2::Sha256;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::UNIX_EPOCH;
 use tokio::io::AsyncReadExt;
@@ -33,12 +32,14 @@ pub async fn index() -> &'static str {
 async fn load_file_into_response(
     file_name: String,
 ) -> Result<impl IntoResponse, u32> {
-    let crate_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let file_path = crate_path
+    let cwd = std::env::current_dir().unwrap();
+    let file_path = cwd
+        .join("assignment2-tester")
         .join("src")
         .join("axum")
         .join("resources")
         .join(&file_name);
+    
     println!("file_path: {:?}", file_path);
 
     match tokio::fs::File::open(&file_path).await {

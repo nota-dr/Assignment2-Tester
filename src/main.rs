@@ -3,6 +3,12 @@ use procfs::process::all_processes;
 
 fn main() {
 
+    let cwd = std::env::current_dir().unwrap();
+    if !cwd.join("assignment2-tester").exists() {
+        println!("Please run the tester from its workspace directory");
+        std::process::exit(1);
+    }
+
     let is_server_running = all_processes().unwrap()
         .any(|process| {
             if let Ok(process) = process {
@@ -17,17 +23,13 @@ fn main() {
         });
 
     let _server = if !is_server_running {
-        let cwd = std::env::current_dir().unwrap();
-        if !cwd.join("assignment2-tester").exists() {
-            println!("Please run the tester from its workspace directory");
-            std::process::exit(1);
-        }
+
         let command_cwd = cwd
             .join("target")
-            .join("debug");
+            .join("release")
+            .join("axum_server");
 
-        let server = std::process::Command::new("./axum_server")
-            .current_dir(command_cwd)
+        let server = std::process::Command::new(command_cwd)
             .stdout(Stdio::null())
             .spawn()
             .expect("Failed to start server"); 
